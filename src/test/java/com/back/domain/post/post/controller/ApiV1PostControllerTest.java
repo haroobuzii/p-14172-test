@@ -14,6 +14,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -108,5 +111,46 @@ public class ApiV1PostControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.resultCode").value("400-1"))
                 .andExpect(jsonPath("$.msg").value("요청 본문이 올바르지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("글 삭제")
+    void t4() throws Exception {
+        int id = 1;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/posts/" + id)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resultCode").value("200-1"))
+                .andExpect(jsonPath("$.msg").value("%d번 글이 삭제되었습니다.".formatted(id)))
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        assertThat(postService.findById(id)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("글 삭제, 존재하지 않는 글이면 404")
+    void t5() throws Exception {
+        int id = Integer.MAX_VALUE;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/posts/" + id)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1PostController.class))
+                .andExpect(handler().methodName("delete"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.resultCode").value("404-1"))
+                .andExpect(jsonPath("$.msg").value("해당 데이터가 존재하지 않습니다."));
     }
 }
