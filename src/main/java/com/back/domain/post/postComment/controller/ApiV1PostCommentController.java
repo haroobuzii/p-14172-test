@@ -44,4 +44,22 @@ public class ApiV1PostCommentController {
                 new PostCommentDto(postComment)
         );
     }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public RsData<Void> delete(
+            @PathVariable int postId,
+            @PathVariable int id
+    ) {
+        Post post = postService.findById(postId).get();
+        PostComment postComment = post.findCommentById(id).get();
+
+        // orphanRemoval = true 이므로 목록에서 빼기만 하면 트랜잭션 종료 시 DELETE 실행
+        postService.deleteComment(post, postComment);
+
+        return new RsData<>(
+                "200-1",
+                "%d번 댓글이 삭제되었습니다.".formatted(id)
+        );
+    }
 }
